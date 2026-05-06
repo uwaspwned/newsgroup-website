@@ -41,10 +41,10 @@ curl -X POST http://localhost:8000/predict \
 - [x] Rate limiting (100/min)
 - [x] CORS middleware
 - [x] Gradio web interface
+- [x] API Key authentication
+- [x] IP whitelist
 
 ### In Progress
-- [ ] API Key authentication
-- [ ] IP whitelist
 - [ ] Environment config (`.env`)
 
 ### Planned
