@@ -5,10 +5,16 @@ import requests
 import gradio as gr
 from gradio.themes import Soft
 
+from pathlib import Path
+from dotenv import load_dotenv
+
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
 FASTAPI_URL = os.getenv('FASTAPI_URL', 'http://localhost:8000')
 PREDICT_URL = f"{FASTAPI_URL}/predict"
 
-API_KEY = "gradio-secret-key-12345" 
+API_KEY = os.getenv("GRADIO_API_KEY")
 
 
 def predict_via_api(text: str) -> str:

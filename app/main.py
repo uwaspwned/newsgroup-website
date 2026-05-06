@@ -70,8 +70,7 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 async def verify_api_key(api_key: str = Depends(api_key_header)):
     """
-    Проверяет API ключ.
-    Если ключ невалидный или отсутствует - возвращает 403 ошибку.
+    Checks the API key.
     """
     if not api_key:
         logger.warning("Request missing API key")
@@ -91,7 +90,7 @@ async def verify_api_key(api_key: str = Depends(api_key_header)):
 
 
 def check_ip_allowed(request: Request):
-    """ Checks the client's IP address."""
+    """Checks the client's IP address."""
 
     client_ip = get_remote_address(request)
     
@@ -157,7 +156,7 @@ async def health_check():
 
 
 @app.post("/predict", tags=["Predict"])
-@limiter.limit("100/minute")
+@limiter.limit(Config.RATE_LIMIT)
 async def predict_class(
     request: Request,
     text_request: TextPredictionRequest,
@@ -197,6 +196,12 @@ async def rate_limit_info():
         "per": "IP address",
         "status": "active"
     }
+
+
+@app.get("/config-info", tags=["Info"])
+async def config_info():
+    """Get information about API configuration"""
+    return Config.get_api_keys_info()
 
 
 if __name__ == "__main__":
