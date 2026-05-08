@@ -14,11 +14,11 @@ cd newsgroup-website
 pip install -r requirements.txt
 
 # run API
-cd web_app
+cd app
 uvicorn main:app
 
 # run Gradio interface (another terminal!)
-cd web_app
+cd app
 
 python app.py
 
@@ -29,7 +29,8 @@ python app.py
 ```bash
 curl -X POST http://localhost:8000/predict \
   -H "Content-Type: application/json" \
-  -d '{"text": "Space shuttle launched yesterday"}'
+  -H "X-API-Key: gradio-secret-key-12345" \
+  -d '{"text": "Space travel"}'
 ```
 
 ## TODO
