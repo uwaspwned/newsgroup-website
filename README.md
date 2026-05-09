@@ -17,9 +17,8 @@ pip install -r requirements.txt
 cd app
 uvicorn main:app
 
-# run Gradio interface (another terminal!)
+# run another terminal for Gradio interface
 cd app
-
 python app.py
 
 # open the site at the link http://127.0.0.1:7860 
