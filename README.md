@@ -33,6 +33,20 @@ curl -X POST http://localhost:8000/predict \
   -d '{"text": "Space travel"}'
 ```
 
+## Monitoring
+
+### Metrics endpoint (Prometheus format)
+```bash
+curl http://localhost:8000/metrics
+```
+
+## View metrics with Prometheus
+```bash
+docker-compose up -d
+open http://localhost:9090
+```
+
+
 ## TODO
 
 ### Done
@@ -45,17 +59,20 @@ curl -X POST http://localhost:8000/predict \
 - [x] API Key authentication
 - [x] IP whitelist
 - [x] Environment config (`.env`)
+- [x] Prometheus metrics (`/metrics` endpoint)
+- [x] Prometheus server (docker-compose)
 
 ### In Progress
-- [ ] Prometheus metrics
+
+- [ ] Docker deployment
 
 ### Planned
-- [ ] Docker deployment
 - [ ] Request ID tracking
 - [ ] Input validation (sanitization)
 - [ ] Model hash verification
 - [ ] Response caching
 - [ ] HTTPS support
+- [ ] Grafana dashboards (optional, for visualization)
 
 ---
 

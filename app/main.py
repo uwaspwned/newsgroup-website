@@ -14,6 +14,8 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
+from prometheus_fastapi_instrumentator import Instrumentator
+
 import uvicorn
 
 from config import Config
@@ -50,6 +52,9 @@ app = FastAPI(
     description="API for classifying text messages into newsgroup categories using a MultinomialNB",
     version="1.0.0"
 )
+
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
