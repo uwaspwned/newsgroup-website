@@ -1,4 +1,5 @@
 import logging
+
 import pickle
 
 from pathlib import Path
@@ -17,6 +18,8 @@ from slowapi.util import get_remote_address
 from prometheus_fastapi_instrumentator import Instrumentator
 
 import uvicorn
+
+from uuid import uuid4
 
 from config import Config
 
@@ -56,6 +59,24 @@ app = FastAPI(
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app)
 
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next):
+    """Adds a unique ID to each request"""
+    request_id = request.headers.get("X-Request-ID", str(uuid4()))
+    request.state.request_id = request_id
+    
+    logger.info(f"[{request_id}] -> {request.method} {request.url.path}")
+    
+    response = await call_next(request)
+    
+    response.headers["X-Request-ID"] = request_id
+    
+    logger.info(f"[{request_id}] <- {response.status_code}")
+    
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -73,19 +94,22 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler) #type
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-async def verify_api_key(api_key: str = Depends(api_key_header)):
-    """
-    Checks the API key.
-    """
+async def verify_api_key(
+    request: Request,
+    api_key: str = Depends(api_key_header)
+):
+    """Checks the API key."""
+    request_id = request.state.request_id
+
     if not api_key:
-        logger.warning("Request missing API key")
+        logger.warning(f"[{request_id}] Request missing API key")
         raise HTTPException(
             status_code=403,
             detail="Missing API Key. Please provide X-API-Key header"
         )
     
     if not Config.is_valid_api_key(api_key):
-        logger.warning(f"Invalid API key attempt: {api_key[:10]}...")
+        logger.warning(f"[{request_id}] Invalid API key attempt: {api_key[:10]}...")
         raise HTTPException(
             status_code=403,
             detail="Invalid API Key"
@@ -96,11 +120,11 @@ async def verify_api_key(api_key: str = Depends(api_key_header)):
 
 def check_ip_allowed(request: Request):
     """Checks the client's IP address."""
-
+    request_id = request.state.request_id
     client_ip = get_remote_address(request)
     
     if not Config.is_ip_allowed(client_ip):
-        logger.warning(f"Blocked request from unauthorized IP: {client_ip}")
+        logger.warning(f"[{request_id}] Blocked request from unauthorized IP: {client_ip}")
         raise HTTPException(
             status_code=403,
             detail=f"IP {client_ip} not allowed. Only whitelisted IPs can access this API."
@@ -167,13 +191,13 @@ async def predict_class(
     text_request: TextPredictionRequest,
     api_key: str = Depends(verify_api_key)
 ):
-
+    request_id = request.state.request_id
     client_ip = check_ip_allowed(request)
 
     check_model()
 
     try:
-        logger.info(f"Authorized request from {client_ip}: {text_request.text[:50]}...")
+        logger.info(f"[{request_id}] Authorized request from {client_ip}: {text_request.text[:50]}...")
 
         prediction = model.predict([text_request.text])[0] # type: ignore
 
@@ -183,12 +207,12 @@ async def predict_class(
             category_name=CATEGORY_MAPPING[int(prediction)]
             )
 
-        logger.info(f"Result for {client_ip}: {prediction}")
+        logger.info(f"[{request_id}] Result for {client_ip}: {prediction}")
         
         return response
     
     except Exception as e:
-        logger.error(f"Error processing request: {e}")
+        logger.error(f"[{request_id}] Error processing request: {e}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
     
 

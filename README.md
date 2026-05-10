@@ -60,18 +60,17 @@ open http://localhost:9090
 - [x] Environment config (`.env`)
 - [x] Prometheus metrics (`/metrics` endpoint)
 - [x] Prometheus server (docker-compose)
+- [x] Request ID tracking
 
 ### In Progress
-
-- [ ] Docker deployment
+- [ ] Input validation (sanitization)
 
 ### Planned
-- [ ] Request ID tracking
-- [ ] Input validation (sanitization)
 - [ ] Model hash verification
 - [ ] Response caching
 - [ ] HTTPS support
 - [ ] Grafana dashboards (optional, for visualization)
+- [ ] Docker deployment
 
 ---
 
