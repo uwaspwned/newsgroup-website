@@ -13,13 +13,15 @@ git clone https://github.com/uwaspwned/newsgroup-website.git
 cd newsgroup-website
 pip install -r requirements.txt
 
+# create .env file and train the model
+cp .env.example .env
+python model.py
+
 # run API
-cd app
-uvicorn main:app
+uvicorn app.main:app --reload
 
 # run another terminal for Gradio interface
-cd app
-python app.py
+python -m app.app
 
 # open the site at the link http://127.0.0.1:7860 
 ```

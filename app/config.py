@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+ENV_PATH = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=ENV_PATH)
 
 class Config:
     """App configuration"""
@@ -29,6 +29,8 @@ class Config:
 
     API_HOST = os.getenv("API_HOST", "0.0.0.0")
     API_PORT = int(os.getenv("API_PORT", "8000"))
+
+    MODEL_PATH = Path(os.getenv("MODEL_PATH", "./app/model.pkl"))
 
     RATE_LIMIT = os.getenv("RATE_LIMIT", "100/minute")
 

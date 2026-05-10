@@ -21,7 +21,7 @@ import uvicorn
 
 from uuid import uuid4
 
-from config import Config
+from app.config import Config
 
 CATEGORY_MAPPING = {
     0: 'Atheism',
@@ -109,7 +109,7 @@ async def verify_api_key(
         )
     
     if not Config.is_valid_api_key(api_key):
-        logger.warning(f"[{request_id}] Invalid API key attempt: {api_key[:10]}...")
+        logger.warning(f"[{request_id}] Invalid API key attempt")
         raise HTTPException(
             status_code=403,
             detail="Invalid API Key"
@@ -134,7 +134,7 @@ def check_ip_allowed(request: Request):
 
 
 model = None
-MODEL_PATH = Path('model.pkl')
+MODEL_PATH = Config.MODEL_PATH
 
 
 def load_model(path_to_model: Path) -> None:
@@ -234,4 +234,4 @@ async def config_info():
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host=Config.API_HOST, port=Config.API_PORT, reload=True)

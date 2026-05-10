@@ -6,6 +6,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 
+from app.config import Config
+
+MODEL_PATH = Config.MODEL_PATH
+
 newsgroups = fetch_20newsgroups()
 
 X, y = newsgroups.data, newsgroups.target # type: ignore
@@ -20,5 +24,7 @@ pipeline = Pipeline([
 
 pipeline.fit(X_train, y_train)
 
-with open('model.pkl', 'wb') as file:
+MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+with open(MODEL_PATH, 'wb') as file:
     pickle.dump(pipeline, file)
