@@ -15,7 +15,7 @@ pip install -r requirements.txt
 
 # create .env file and train the model
 cp .env.example .env
-python model.py
+python -m ml.train
 
 # run API
 uvicorn app.main:app --reload

@@ -30,7 +30,8 @@ class Config:
     API_HOST = os.getenv("API_HOST", "0.0.0.0")
     API_PORT = int(os.getenv("API_PORT", "8000"))
 
-    MODEL_PATH = Path(os.getenv("MODEL_PATH", "./app/model.pkl"))
+    MODEL_PATH = Path(os.getenv("MODEL_PATH", "./models/model.pkl"))
+    MODEL_CONFIG_PATH = Path(os.getenv("MODEL_CONFIG_PATH", "./models/model_config.json"))
 
     RATE_LIMIT = os.getenv("RATE_LIMIT", "100/minute")
 
