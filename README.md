@@ -61,17 +61,16 @@ open http://localhost:9090
 - [x] IP whitelist
 - [x] Environment config (`.env`)
 - [x] Prometheus metrics (`/metrics` endpoint)
-- [x] Prometheus server (docker-compose)
+- [x] Prometheus server and grafana support (docker-compose)
 - [x] Request ID tracking
 
 ### In Progress
-- [ ] Input validation (sanitization)
+- [ ] Model verification
 
 ### Planned
-- [ ] Model hash verification
+- [ ] Input validation (sanitization)
 - [ ] Response caching
 - [ ] HTTPS support
-- [ ] Grafana dashboards (optional, for visualization)
 - [ ] Docker deployment
 
 ---
