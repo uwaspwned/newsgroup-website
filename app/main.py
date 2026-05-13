@@ -23,6 +23,8 @@ from uuid import uuid4
 
 from app.config import Config
 
+from app.model_verification import verify_model
+
 CATEGORY_MAPPING = {
     0: 'Atheism',
     1: 'Computer Graphics',
@@ -155,7 +157,10 @@ def check_model():
         raise HTTPException(status_code=503, detail="Model not loaded")
 
 
-load_model(MODEL_PATH)
+if verify_model():
+    load_model(MODEL_PATH)
+else:
+    raise RuntimeError("Model verification failed. API will not start.")
 
 
 class TextPredictionRequest(BaseModel):

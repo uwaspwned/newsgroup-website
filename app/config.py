@@ -33,6 +33,9 @@ class Config:
     MODEL_PATH = Path(os.getenv("MODEL_PATH", "./models/model.pkl"))
     MODEL_CONFIG_PATH = Path(os.getenv("MODEL_CONFIG_PATH", "./models/model_config.json"))
 
+    PRIVATE_KEY_PATH = Path(os.getenv("PRIVATE_KEY_PATH", "./models/private.key"))
+    PUBLIC_KEY_PATH = Path(os.getenv("PUBLIC_KEY_PATH", "./models/public.key"))
+
     RATE_LIMIT = os.getenv("RATE_LIMIT", "100/minute")
 
     @classmethod

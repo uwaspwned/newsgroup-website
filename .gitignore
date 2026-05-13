@@ -20,6 +20,12 @@ data/
 *.pkl
 *.joblib
 
+# Keys
+*.key
+
+# "models" Folder
+models/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -76,6 +82,5 @@ Thumbs.db
 **/.ipynb_checkpoints
 **~.ipynb
 
-# my own directory for unnecessary files
-
+# My own directory for unnecessary files
 trash/

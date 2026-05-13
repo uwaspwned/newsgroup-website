@@ -8,10 +8,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 
+from nacl.signing import SigningKey
+
 from app.config import Config
 
 MODEL_PATH = Config.MODEL_PATH
 MODEL_CONFIG_PATH = Config.MODEL_CONFIG_PATH
+
+PRIVATE_KEY_PATH = Config.PRIVATE_KEY_PATH
 
 MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
 MODEL_CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -70,6 +74,17 @@ model_configuration = {
 
 with open(MODEL_PATH, "wb") as file:
     pickle.dump(pipeline, file)
+
+with open(PRIVATE_KEY_PATH, "rb") as f:
+    signing_key = SigningKey(f.read())
+
+with open(MODEL_PATH, "rb") as f:
+    model_bytes = f.read()
+
+signature = signing_key.sign(model_bytes).signature
+
+with open(f"{MODEL_PATH}.sig", "wb") as f:
+    f.write(signature)
 
 with open(MODEL_CONFIG_PATH, "w", encoding="utf-8") as file:
     json.dump(model_configuration, file, indent=2)

@@ -10,11 +10,24 @@ Simple text classification API using MultinomialNB for newsgroup categories.
 ```bash
 # Clone repository
 git clone https://github.com/uwaspwned/newsgroup-website.git
+
 cd newsgroup-website
+
+python -m venv .venv
+
+source .venv/bin/activate  # for Linux/Mac
+# or
+.venv\Scripts\activate     # for Windows
+
 pip install -r requirements.txt
 
-# create .env file and train the model
+# create .env file
 cp .env.example .env
+
+# Create model's keys
+python -m ml.generate_keys
+
+# Train model
 python -m ml.train
 
 # run API
@@ -63,12 +76,12 @@ open http://localhost:9090
 - [x] Prometheus metrics (`/metrics` endpoint)
 - [x] Prometheus server and grafana support (docker-compose)
 - [x] Request ID tracking
+- [x] Model verification
 
 ### In Progress
-- [ ] Model verification
+- [ ] Input validation (sanitization)
 
 ### Planned
-- [ ] Input validation (sanitization)
 - [ ] Response caching
 - [ ] HTTPS support
 - [ ] Docker deployment
