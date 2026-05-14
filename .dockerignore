@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+.env
+.env.*
+models
+certs
+trash
+*.pyc
+*.pkl
+*.sig
+*.key

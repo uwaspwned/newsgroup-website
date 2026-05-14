@@ -15,6 +15,8 @@ FASTAPI_URL = os.getenv('FASTAPI_URL', 'http://localhost:8000')
 PREDICT_URL = f"{FASTAPI_URL}/predict"
 
 API_KEY = os.getenv("GRADIO_API_KEY")
+GRADIO_HOST = os.getenv("GRADIO_HOST", "0.0.0.0")
+GRADIO_PORT = int(os.getenv("GRADIO_PORT", "7860"))
 
 
 def predict_via_api(text: str) -> str:
@@ -83,4 +85,4 @@ with gr.Blocks() as demo:
 
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, theme=Soft())
+    demo.launch(server_name=GRADIO_HOST, server_port=GRADIO_PORT, theme=Soft())

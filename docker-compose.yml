@@ -1,4 +1,47 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: newsgroup_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    container_name: newsgroup_api
+    env_file:
+      - .env
+    environment:
+      BOOTSTRAP_MODEL: "true"
+      REDIS_URL: redis://redis:6379/0
+      MODEL_PATH: ./models/model.pkl
+      MODEL_CONFIG_PATH: ./models/model_config.json
+      PRIVATE_KEY_PATH: ./models/private.key
+      PUBLIC_KEY_PATH: ./models/public.key
+      ALLOWED_IPS: 127.0.0.1,::1,172.16.0.0/12
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./certs:/app/certs:ro
+    depends_on:
+      - redis
+
+  gradio:
+    build: .
+    container_name: newsgroup_gradio
+    env_file:
+      - .env
+    environment:
+      BOOTSTRAP_MODEL: "false"
+      FASTAPI_URL: http://api:8000
+      GRADIO_HOST: 0.0.0.0
+      GRADIO_PORT: 7860
+    command: ["python", "-m", "app.app"]
+    ports:
+      - "7860:7860"
+    depends_on:
+      - api
+
   prometheus:
     image: prom/prometheus:latest
     container_name: newsgroup_prometheus

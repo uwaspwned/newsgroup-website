@@ -1,5 +1,7 @@
 import logging
 
+import hashlib
+import json
 import pickle
 
 import re
@@ -18,6 +20,9 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from prometheus_fastapi_instrumentator import Instrumentator
+
+from redis import Redis
+from redis.exceptions import RedisError
 
 import uvicorn
 
@@ -139,6 +144,8 @@ def check_ip_allowed(request: Request):
 
 model = None
 MODEL_PATH = Config.MODEL_PATH
+redis_client = None
+model_cache_namespace = "unknown"
 
 CONTROL_CHARS_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 WHITESPACE_PATTERN = re.compile(r"\s+")
@@ -169,10 +176,76 @@ def check_model():
         raise HTTPException(status_code=503, detail="Model not loaded")
 
 
+def connect_redis_cache() -> Redis | None:
+    if not Config.CACHE_ENABLED:
+        logger.info("Redis cache disabled")
+        return None
+
+    try:
+        client = Redis.from_url(Config.REDIS_URL, decode_responses=True)
+        client.ping()
+        logger.info("Redis cache connected")
+        return client
+    except RedisError as e:
+        logger.warning(f"Redis cache unavailable: {e}")
+        return None
+
+
+def get_model_cache_namespace() -> str:
+    try:
+        with open(f"{MODEL_PATH}.sig", "rb") as file:
+            signature = file.read()
+        return hashlib.sha256(signature).hexdigest()[:16]
+    except OSError as e:
+        logger.warning(f"Could not build model cache namespace: {e}")
+        return "unknown"
+
+
+def get_prediction_cache_key(text: str) -> str:
+    text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return f"prediction:{model_cache_namespace}:{text_hash}"
+
+
+def get_cached_prediction(text: str) -> dict | None:
+    if redis_client is None:
+        return None
+
+    try:
+        cached_prediction = redis_client.get(get_prediction_cache_key(text))
+        if cached_prediction is None:
+            return None
+        prediction = json.loads(cached_prediction)
+        if not isinstance(prediction, dict):
+            return None
+        if "text_class" not in prediction or "category_name" not in prediction:
+            return None
+        return prediction
+    except (RedisError, json.JSONDecodeError) as e:
+        logger.warning(f"Could not read prediction cache: {e}")
+        return None
+
+
+def save_prediction_cache(text: str, prediction: dict) -> None:
+    if redis_client is None:
+        return
+
+    try:
+        redis_client.setex(
+            get_prediction_cache_key(text),
+            Config.CACHE_TTL_SECONDS,
+            json.dumps(prediction),
+        )
+    except RedisError as e:
+        logger.warning(f"Could not write prediction cache: {e}")
+
+
 if verify_model():
     load_model(MODEL_PATH)
+    model_cache_namespace = get_model_cache_namespace()
 else:
     raise RuntimeError("Model verification failed. API will not start.")
+
+redis_client = connect_redis_cache()
 
 
 class TextPredictionRequest(BaseModel):
@@ -229,13 +302,29 @@ async def predict_class(
     try:
         logger.info(f"[{request_id}] Authorized request from {client_ip}: {text_request.text[:50]}...")
 
+        cached_prediction = get_cached_prediction(text_request.text)
+        if cached_prediction is not None:
+            logger.info(f"[{request_id}] Cache hit for {client_ip}")
+            return ModelResponse(
+                text_class=cached_prediction["text_class"],
+                text=text_request.text,
+                category_name=cached_prediction["category_name"]
+            )
+
         prediction = model.predict([text_request.text])[0] # type: ignore
+        text_class = int(prediction)
+        category_name = CATEGORY_MAPPING[text_class]
 
         response = ModelResponse(
-            text_class=int(prediction),
+            text_class=text_class,
             text=text_request.text,
-            category_name=CATEGORY_MAPPING[int(prediction)]
+            category_name=category_name
             )
+
+        save_prediction_cache(text_request.text, {
+            "text_class": text_class,
+            "category_name": category_name,
+        })
 
         logger.info(f"[{request_id}] Result for {client_ip}: {prediction}")
         
@@ -263,5 +352,42 @@ async def config_info():
     return Config.get_api_keys_info()
 
 
+@app.get("/cache-info", tags=["Info"])
+async def cache_info():
+    """Get information about Redis prediction cache."""
+    if redis_client is None:
+        return {
+            "enabled": Config.CACHE_ENABLED,
+            "connected": False,
+            "ttl_seconds": Config.CACHE_TTL_SECONDS,
+            "cache_namespace": model_cache_namespace,
+        }
+
+    try:
+        return {
+            "enabled": Config.CACHE_ENABLED,
+            "connected": True,
+            "ttl_seconds": Config.CACHE_TTL_SECONDS,
+            "cache_namespace": model_cache_namespace,
+            "db_size": redis_client.dbsize(),
+        }
+    except RedisError as e:
+        logger.warning(f"Could not read cache info: {e}")
+        return {
+            "enabled": Config.CACHE_ENABLED,
+            "connected": False,
+            "ttl_seconds": Config.CACHE_TTL_SECONDS,
+            "cache_namespace": model_cache_namespace,
+        }
+
+
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host=Config.API_HOST, port=Config.API_PORT, reload=True)
+    app_target = "app.main:app" if Config.API_RELOAD else app
+    uvicorn.run(
+        app_target,
+        host=Config.API_HOST,
+        port=Config.API_PORT,
+        reload=Config.API_RELOAD,
+        ssl_keyfile=Config.SSL_KEYFILE,
+        ssl_certfile=Config.SSL_CERTFILE,
+    )

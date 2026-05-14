@@ -1,4 +1,5 @@
 import os
+import ipaddress
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -22,6 +23,14 @@ class Config:
         "127.0.0.1",
         "localhost",
     ]
+
+    EXTRA_ALLOWED_IPS = os.getenv("ALLOWED_IPS")
+    if EXTRA_ALLOWED_IPS:
+        ALLOWED_IPS.extend([
+            ip.strip()
+            for ip in EXTRA_ALLOWED_IPS.split(",")
+            if ip.strip()
+        ])
     
     SERVER_IP = os.getenv("SERVER_IP")
     if SERVER_IP:
@@ -29,6 +38,9 @@ class Config:
 
     API_HOST = os.getenv("API_HOST", "0.0.0.0")
     API_PORT = int(os.getenv("API_PORT", "8000"))
+    API_RELOAD = os.getenv("API_RELOAD", "false").lower() in ("1", "true", "yes")
+    SSL_KEYFILE = os.getenv("SSL_KEYFILE")
+    SSL_CERTFILE = os.getenv("SSL_CERTFILE")
 
     MODEL_PATH = Path(os.getenv("MODEL_PATH", "./models/model.pkl"))
     MODEL_CONFIG_PATH = Path(os.getenv("MODEL_CONFIG_PATH", "./models/model_config.json"))
@@ -38,6 +50,10 @@ class Config:
 
     RATE_LIMIT = os.getenv("RATE_LIMIT", "100/minute")
 
+    REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "3600"))
+    CACHE_ENABLED = os.getenv("CACHE_ENABLED", "true").lower() in ("1", "true", "yes")
+
     @classmethod
     def is_ip_allowed(cls, ip: str) -> bool:
         """Checks if an IP address is allowed"""
@@ -46,6 +62,18 @@ class Config:
         
         if ip == "127.0.0.1" or ip == "::1":
             return True
+
+        try:
+            client_ip = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+
+        for allowed_ip in cls.ALLOWED_IPS:
+            try:
+                if "/" in allowed_ip and client_ip in ipaddress.ip_network(allowed_ip, strict=False):
+                    return True
+            except ValueError:
+                continue
         
         return False
     

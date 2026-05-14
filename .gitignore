@@ -22,6 +22,7 @@ data/
 
 # Keys
 *.key
+certs/
 
 # "models" Folder
 models/
