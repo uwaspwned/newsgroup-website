@@ -2,13 +2,15 @@ import logging
 
 import pickle
 
+import re
+
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader 
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic.config import ConfigDict
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -138,6 +140,16 @@ def check_ip_allowed(request: Request):
 model = None
 MODEL_PATH = Config.MODEL_PATH
 
+CONTROL_CHARS_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+WHITESPACE_PATTERN = re.compile(r"\s+")
+
+
+def sanitize_text(text: str) -> str:
+    text = text.strip()
+    text = CONTROL_CHARS_PATTERN.sub("", text)
+    text = WHITESPACE_PATTERN.sub(" ", text)
+    return text
+
 
 def load_model(path_to_model: Path) -> None:
     """Load the pre-trained model from a pickle file."""
@@ -167,6 +179,19 @@ class TextPredictionRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=2100)
 
     """Incoming request schema."""
+    @field_validator("text")
+    @classmethod
+    def validate_and_sanitize_text(cls, value: str) -> str:
+        sanitized_text = sanitize_text(value)
+
+        if not sanitized_text:
+            raise ValueError("Text must not be empty")
+
+        if len(sanitized_text) < 3:
+            raise ValueError("Text is too short")
+
+        return sanitized_text
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "text": "Space shuttle launched yesterday from Kennedy Space Center"

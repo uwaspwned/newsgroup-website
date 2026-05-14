@@ -77,12 +77,12 @@ open http://localhost:9090
 - [x] Prometheus server and grafana support (docker-compose)
 - [x] Request ID tracking
 - [x] Model verification
+- [x] Input validation (sanitization)
 
 ### In Progress
-- [ ] Input validation (sanitization)
+- [ ] Response caching
 
 ### Planned
-- [ ] Response caching
 - [ ] HTTPS support
 - [ ] Docker deployment
 
