@@ -1,9 +1,23 @@
 # Newsgroup Classification API
 
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12+-blue?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136.0-green?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Gradio](https://img.shields.io/badge/Gradio-6.13.0-orange?style=flat-square&logo=gradio&logoColor=white)](https://gradio.app/)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Redis](https://img.shields.io/badge/Redis-ready-EA2B1E?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-monitoring-orange?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![pytes](https://img.shields.io/badge/pytest-passed-brightgreen?style=flat-square&logo=pytest&logoColor=white)](https://docs.pytest.org/)
+
 Text classification service for 20 Newsgroups categories. The project trains a
 `TfidfVectorizer + MultinomialNB` pipeline, serves predictions through FastAPI,
 provides a Gradio UI, verifies the model artifact signature, caches repeated
 predictions in Redis, and exposes Prometheus metrics.
+
+## 🌐 Live demo (try it!)
+
+- **Gradio interface**: [https://huggingface.co/spaces/dotwired/naive-bayess-gradio](https://huggingface.co/spaces/dotwired/naive-bayess-gradio)
+- **API docs**: [https://dotwired-naive-bayess-backend.hf.space/docs](https://dotwired-naive-bayess-backend.hf.space/docs)
+- **Health check**: [https://dotwired-naive-bayess-backend.hf.space](https://dotwired-naive-bayess-backend.hf.space)
 
 ## Features
 
